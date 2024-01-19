@@ -156,4 +156,8 @@ def get_media(message):
                     bot.send_message(message.chat.id, 'Sorry, couldn\'t send video.')
 
 print('Bot is running...')
-bot.infinity_polling()
+while True:
+    try:
+        bot.infinity_polling()
+    except:
+        time.sleep(10)
