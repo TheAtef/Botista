@@ -135,22 +135,23 @@ def get_media(message):
     if media_type == 8:
         bot.delete_message(message.chat.id, delete.message_id, timeout=10)
         caption = f"User: <a href='{INSTA_URL}{parsed_json['user']['username']}/'>@{parsed_json['user']['username']}</a>\n\nCaption:\n{parsed_json['caption']['text']}\n\nLikes: {parsed_json['like_count']:,}"
-        bot.send_message(message.chat.id, caption, 'HTML', reply_to_message_id=message.message_id)
+        items = []
         for item in parsed_json['carousel_media']:
             if item['media_type'] == 1:
-                try:
-                    bot.send_chat_action(message.chat.id, action='upload_photo')
-                    image = sorted(item["image_versions2"]["candidates"], key=lambda o: o["height"] * o["width"])[-1]["url"]
-                    bot.send_photo(message.chat.id, image)
-                except Exception:
-                    bot.send_message(message.chat.id, 'Sorry, couldn\'t send photo.')
+                if len(items) == 0 and len(caption) <= 1024:
+                    items.append(types.InputMediaPhoto(sorted(item["image_versions2"]["candidates"], key=lambda o: o["height"] * o["width"])[-1]["url"], caption=caption, parse_mode='HTML'))
+                else: 
+                    items.append(types.InputMediaPhoto(sorted(item["image_versions2"]["candidates"], key=lambda o: o["height"] * o["width"])[-1]["url"]))
             if item['media_type'] == 2:
-                try:
-                    bot.send_chat_action(message.chat.id, action='upload_video')
-                    video_url = sorted(item["video_versions"], key=lambda o: o["height"] * o["width"])[-1]["url"]
-                    bot.send_video(message.chat.id, video_url)
-                except Exception:
-                    bot.send_message(message.chat.id, 'Sorry, couldn\'t send video.')
+                if len(items) == 0 and len(caption) <= 1024:
+                    items.append(types.InputMediaVideo(sorted(item["image_versions2"]["candidates"], key=lambda o: o["height"] * o["width"])[-1]["url"], caption=caption, parse_mode='HTML'))
+                else: 
+                    items.append(types.InputMediaVideo(sorted(item["image_versions2"]["candidates"], key=lambda o: o["height"] * o["width"])[-1]["url"]))
+        if len(caption) > 1024:
+            bot.send_message(message.chat.id, caption, 'HTML', reply_to_message_id=message.message_id) 
+            bot.send_media_group(message.chat.id, media=items)
+        else:
+            bot.send_media_group(message.chat.id, media=items, reply_to_message_id=message.message_id)
 
 print('Bot is running...')
 while True:
